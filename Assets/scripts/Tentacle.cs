@@ -35,13 +35,16 @@ public class Tentacle : MonoBehaviour {
 
     void Update()
     {
-        isGrabing = Input.GetButton("Grab");
-
-        switch(type)
+        if (PlayerController.inst.isControllable)
         {
-            case Type.grab:
-                Grab();
-                break;
+            isGrabing = Input.GetButton("Grab");
+
+            switch (type)
+            {
+                case Type.grab:
+                    Grab();
+                    break;
+            }
         }
     }
     void Grab()

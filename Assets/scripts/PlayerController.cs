@@ -20,6 +20,8 @@ public class PlayerController : MonoBehaviour {
 
     public Text guiText;
 
+    public bool isControllable;
+
     public PhysicsMaterial2D groundedPhysicsMaterial;
     public PhysicsMaterial2D airPhysicsMaterial;
 
@@ -51,8 +53,8 @@ public class PlayerController : MonoBehaviour {
         body.GetComponent<SpriteRenderer>().sprite = crying;
         ink = this.transform.Find("ink").gameObject;
         ToggleText(false);
-        //CreateTentacle(Tentacle.Type.grab, 0);
-        //CreateTentacle(Tentacle.Type.grab, 180);
+        CreateTentacle(Tentacle.Type.grab, 0);
+        CreateTentacle(Tentacle.Type.grab, 180);
         //CreateTentacle(Tentacle.Type.grab, 75);
         //CreateTentacle(Tentacle.Type.grab, 105);
         //CreateTentacle(Tentacle.Type.grab, 135);
@@ -80,6 +82,7 @@ public class PlayerController : MonoBehaviour {
     {
         Vector2 startPos = this.transform.position;
         rb.isKinematic = true;
+        isControllable = false;
         this.transform.DOMoveY(startPos.y + 1.5f, 0.5f);
         this.transform.DORotate(Vector3.zero, 0.5f);
         AudioManager.inst.PlaySound("armget");
@@ -88,6 +91,7 @@ public class PlayerController : MonoBehaviour {
         tentacleParticle.transform.SetParent(this.transform);
         tentacleParticle.transform.rotation = Quaternion.Euler(new Vector3(0, 0, _rot + 180));
         yield return new WaitForSeconds(0.25f);
+        isControllable = true;
         if (tentacles.Count == 0)
             body.GetComponent<SpriteRenderer>().sprite = notCrying;
         DisplayText("Tentacle Get! \n \n Can now attach to things with right bumper / x", 3f);
@@ -103,23 +107,26 @@ public class PlayerController : MonoBehaviour {
         currRotation = rb.rotation;
         currentAngularSpeed = rb.angularVelocity;
         float horizontal = Input.GetAxis("Horizontal");
-        if (horizontal > 0)
+        if (isControllable)
         {
-            rb.AddTorque(-horizontal * speedMult);
-            rb.AddForce(new Vector2(1, 0));
-        }
-        else if (horizontal < 0)
-        {
-            rb.AddTorque(-horizontal * speedMult);
-            rb.AddForce(new Vector2(-1, 0));
-        }
-        else
-        {
-            rb.AddTorque(slowDownMult * (lastRotation - currRotation));
-        }
+            if (horizontal > 0)
+            {
+                rb.AddTorque(-horizontal * speedMult);
+                rb.AddForce(new Vector2(1, 0));
+            }
+            else if (horizontal < 0)
+            {
+                rb.AddTorque(-horizontal * speedMult);
+                rb.AddForce(new Vector2(-1, 0));
+            }
+            else
+            {
+                rb.AddTorque(slowDownMult * (lastRotation - currRotation));
+            }
 
-        if (Mathf.Abs(currentAngularSpeed) > maxAngularSpeed)
-            rb.AddTorque(lastRotation - currRotation);
+            if (Mathf.Abs(currentAngularSpeed) > maxAngularSpeed)
+                rb.AddTorque(lastRotation - currRotation);
+        }
 
         lastRotation = currRotation;
     }
