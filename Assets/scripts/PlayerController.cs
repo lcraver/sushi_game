@@ -1,8 +1,11 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using DG.Tweening;
 
 public class PlayerController : MonoBehaviour {
+
+    public bool Debug;
 
     public static PlayerController inst;
 
@@ -14,7 +17,11 @@ public class PlayerController : MonoBehaviour {
             Destroy(gameObject);
     }
 
+    public PhysicsMaterial2D groundedPhysicsMaterial;
+    public PhysicsMaterial2D airPhysicsMaterial;
+
     public GameObject tentaclePrefab;
+    public GameObject particlePrefab;
     public List<Tentacle> tentacles = new List<Tentacle>();
 
     public Rigidbody2D rb;
@@ -51,6 +58,28 @@ public class PlayerController : MonoBehaviour {
         joint.connectedBody = tentacles[tentacles.Count - 1].tentacleObjects[0].GetComponent<Rigidbody2D>();
     }
 
+    public void PlayTentacleGetAnimation(Tentacle.Type _type, float _rot)
+    {
+        StartCoroutine(PlayTentacleGetAnimationLoop(_type, _rot));
+    }
+
+    public IEnumerator PlayTentacleGetAnimationLoop(Tentacle.Type _type, float _rot)
+    {
+        Vector2 startPos = this.transform.position;
+        rb.isKinematic = true;
+        this.transform.DOMoveY(startPos.y + 1.5f, 0.5f);
+        this.transform.DORotate(Vector3.zero, 0.5f);
+        yield return new WaitForSeconds(0.5f);
+        GameObject tentacleParticle = Instantiate(particlePrefab, this.transform.position, Quaternion.identity) as GameObject;
+        tentacleParticle.transform.SetParent(this.transform);
+        tentacleParticle.transform.rotation = Quaternion.Euler(new Vector3(0, 0, _rot + 180));
+        yield return new WaitForSeconds(0.25f);
+        CreateTentacle(_type, _rot);
+        rb.isKinematic = false;
+        yield return new WaitForSeconds(0.5f);
+        Destroy(tentacleParticle);
+    }
+
     void FixedUpdate()
     {
         currRotation = rb.rotation;
@@ -73,33 +102,70 @@ public class PlayerController : MonoBehaviour {
 
     void Update()
     {
-        IsGrounded = isGrounded();
-
         if(Input.GetButtonDown("Jump") && IsGrounded)
         {
             rb.AddForce(new Vector2(0, jumpForce));
         }
+
+        if (IsGrounded)
+        {
+            foreach (Tentacle tentacle in tentacles)
+            {
+                foreach (GameObject tentaclePart in tentacle.tentacleObjects)
+                {
+                    tentaclePart.GetComponent<Collider2D>().sharedMaterial = groundedPhysicsMaterial;
+                }
+            }
+        }
+        else
+        {
+            foreach (Tentacle tentacle in tentacles)
+            {
+                foreach (GameObject tentaclePart in tentacle.tentacleObjects)
+                {
+                    tentaclePart.GetComponent<Collider2D>().sharedMaterial = airPhysicsMaterial;
+                }
+            }
+        }
+
+        IsGrounded = isGrounded();
     }
 
     bool isGrounded()
     {
-        bool isGrounded = false;
-        isGrounded = Physics2D.OverlapCircle(this.transform.position, 1f, groundLayers);
-        foreach (Tentacle tentacle in tentacles)
+        if(Physics2D.OverlapCircle(this.transform.position - new Vector3(0, 0.25f), 0.25f, groundLayers))
         {
-            if (Physics2D.OverlapCircle(tentacle.armObject.transform.position, 1f, groundLayers))
-                IsGrounded = true;
+            return true;
         }
 
-        return isGrounded;
+        foreach (Tentacle tentacle in tentacles)
+        {
+            foreach (GameObject tentaclePart in tentacle.tentacleObjects)
+            {
+                if (Physics2D.OverlapCircle(tentaclePart.transform.position, 0.25f, groundLayers))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
-    
-    //void OnDrawGizmos()
-    //{
-    //    foreach (Tentacle tentacle in tentacles)
-    //    {
-    //        Gizmos.color = new Color(0, 1, 0, 0.25f);
-    //        Gizmos.DrawSphere(tentacle.armObject.transform.position, 1f);
-    //    }
-    //}
+
+    void OnDrawGizmos()
+    {
+        if (Debug)
+        {
+            Gizmos.color = new Color(0, 1, 0, 0.25f);
+            Gizmos.DrawSphere(this.transform.position - new Vector3(0, 0.25f), 0.25f);
+
+            foreach (Tentacle tentacle in tentacles)
+            {
+                foreach (GameObject tentaclePart in tentacle.tentacleObjects)
+                {
+                    Gizmos.DrawSphere(tentaclePart.transform.position, 0.25f);
+                }
+            }
+        }
+    }
 }

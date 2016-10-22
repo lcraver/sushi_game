@@ -14,7 +14,7 @@ public class ArmPartCollision : MonoBehaviour {
     {
         if (coll.gameObject.tag == "Player" && !tentacleMaster.GetComponent<CollectableTentacle>().collected)
         {
-            PlayerController.inst.CreateTentacle(tentacleMaster.GetComponent<CollectableTentacle>().type, tentacleMaster.GetComponent<CollectableTentacle>().rot);
+            PlayerController.inst.PlayTentacleGetAnimation(tentacleMaster.GetComponent<CollectableTentacle>().type, tentacleMaster.GetComponent<CollectableTentacle>().rot);
             Destroy(tentacleMaster);
         }
     }
