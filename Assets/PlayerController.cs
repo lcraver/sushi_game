@@ -13,6 +13,10 @@ public class PlayerController : MonoBehaviour {
     public float maxAngularSpeed = 5f;
     public float speedMult = 2f;
     public float slowDownMult = 2f;
+    public float jumpForce = 100f;
+
+    public LayerMask groundLayers;
+    public bool IsGrounded = false;
 
     void Start ()
     {
@@ -38,5 +42,20 @@ public class PlayerController : MonoBehaviour {
             rb.AddTorque(lastRotation - currRotation);
 
         lastRotation = currRotation;
+    }
+
+    void Update()
+    {
+        isGrounded();
+
+        if(Input.GetButtonDown("Jump") && IsGrounded)
+        {
+            rb.AddForce(new Vector2(0, jumpForce));
+        }
+    }
+
+    void isGrounded()
+    {
+        IsGrounded = Physics2D.OverlapCircle(this.transform.position, 1f, groundLayers);
     }
 }
