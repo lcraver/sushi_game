@@ -4,7 +4,8 @@ using System.Collections.Generic;
 
 public class PlayerController : MonoBehaviour {
 
-    public Dictionary<Tentacle.Type, Tentacle> tentacles = new Dictionary<Tentacle.Type, Tentacle>();
+    public GameObject tentaclePrefab;
+    public List<Tentacle> tentacles = new List<Tentacle>();
 
     public Rigidbody2D rb;
     public float lastRotation;
@@ -21,7 +22,23 @@ public class PlayerController : MonoBehaviour {
     void Start ()
     {
         rb = this.GetComponent<Rigidbody2D>();
-        //Tentacle tentacle = new Tentacle(this.gameObject, Tentacle.Type.walking1);
+        CreateTentacle(Tentacle.Type.walking1, 45);
+        CreateTentacle(Tentacle.Type.walking1, 75);
+        CreateTentacle(Tentacle.Type.walking1, 105);
+        CreateTentacle(Tentacle.Type.walking1, 135);
+    }
+
+    void CreateTentacle(Tentacle.Type _type, float _rot)
+    {
+        GameObject tentacleTemp = Instantiate(tentaclePrefab, new Vector3(0, 0, 0), Quaternion.identity) as GameObject;
+        tentacleTemp.name = tentacles.Count.ToString() + " - " + _type.ToString();
+        tentacles.Add(tentacleTemp.GetComponent<Tentacle>());
+        tentacles[tentacles.Count - 1].InitTentacle(this.gameObject, _type);
+        tentacleTemp.transform.SetParent(this.gameObject.transform);
+        tentacleTemp.transform.localPosition = Vector3.zero;
+        tentacleTemp.transform.localRotation = Quaternion.Euler(new Vector3(0,0,_rot));
+        FixedJoint2D joint = this.gameObject.AddComponent<FixedJoint2D>();
+        joint.connectedBody = tentacles[tentacles.Count - 1].tentacleObjects[0].GetComponent<Rigidbody2D>();
     }
 
     void FixedUpdate()
@@ -46,7 +63,7 @@ public class PlayerController : MonoBehaviour {
 
     void Update()
     {
-        isGrounded();
+        IsGrounded = isGrounded();
 
         if(Input.GetButtonDown("Jump") && IsGrounded)
         {
@@ -54,8 +71,25 @@ public class PlayerController : MonoBehaviour {
         }
     }
 
-    void isGrounded()
+    bool isGrounded()
     {
-        IsGrounded = Physics2D.OverlapCircle(this.transform.position, 1f, groundLayers);
+        bool isGrounded = false;
+        isGrounded = Physics2D.OverlapCircle(this.transform.position, 1f, groundLayers);
+        foreach (Tentacle tentacle in tentacles)
+        {
+            if (Physics2D.OverlapCircle(tentacle.armObject.transform.position, 1f, groundLayers))
+                IsGrounded = true;
+        }
+
+        return isGrounded;
     }
+    
+    //void OnDrawGizmos()
+    //{
+    //    foreach (Tentacle tentacle in tentacles)
+    //    {
+    //        Gizmos.color = new Color(0, 1, 0, 0.25f);
+    //        Gizmos.DrawSphere(tentacle.armObject.transform.position, 1f);
+    //    }
+    //}
 }
