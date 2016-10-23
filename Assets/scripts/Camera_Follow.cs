@@ -21,7 +21,7 @@ public class Camera_Follow : MonoBehaviour
     private float yOffset = 1.5f;
 
     public Vector2 xClamp = new Vector2(-10, -0.75f);
-    public Vector2 yClamp = new Vector2(0, 62f);
+    public Vector2 yClamp = new Vector2(0, 80f);
 
     public Camera camera;
 

@@ -31,7 +31,22 @@ public class PlayerController : MonoBehaviour {
     public GameObject body;
     public Sprite crying;
     public Sprite notCrying;
+    public List<TentacleConnection> pastTentacles = new List<TentacleConnection>();
     public List<Tentacle> tentacles = new List<Tentacle>();
+
+    public Vector2 currentCheckpoint = new Vector2(-2.5f, -3.4f);
+
+    public class TentacleConnection
+    {
+        public float rot;
+        public Tentacle.Type type; 
+
+        public TentacleConnection(float _rot, Tentacle.Type _type)
+        {
+            rot = _rot;
+            type = _type;
+        }
+    }
 
     public Rigidbody2D rb;
     public float lastRotation;
@@ -46,6 +61,11 @@ public class PlayerController : MonoBehaviour {
     public bool IsGrounded = false;
     public bool IsHoldingObject = false;
 
+    public void SetCheckpoint(Vector2 _pos)
+    {
+        currentCheckpoint = _pos;
+    }
+
     void Start ()
     {
         rb = this.GetComponent<Rigidbody2D>();
@@ -53,11 +73,38 @@ public class PlayerController : MonoBehaviour {
         body.GetComponent<SpriteRenderer>().sprite = crying;
         ink = this.transform.Find("ink").gameObject;
         ToggleText(false);
-        CreateTentacle(Tentacle.Type.grab, 0);
-        CreateTentacle(Tentacle.Type.grab, 180);
+        //CreateTentacle(Tentacle.Type.grab, 0);
+        //CreateTentacle(Tentacle.Type.grab, 180);
         //CreateTentacle(Tentacle.Type.grab, 75);
         //CreateTentacle(Tentacle.Type.grab, 105);
         //CreateTentacle(Tentacle.Type.grab, 135);
+        DisplayText("Move with Arrow Jeys / Right Joystick \n \n Jump with Z / A Button", 5);
+    }
+
+    public void DeleteTentacles()
+    {
+        foreach(Tentacle tentacle in tentacles)
+        {
+            Destroy(tentacle.gameObject);
+        }
+        tentacles.Clear();
+
+        this.transform.position = currentCheckpoint;
+        RecreateTentacles();
+    }
+
+    public void RecreateTentacles()
+    {
+        List<TentacleConnection> connections = new List<TentacleConnection>();
+
+        foreach (TentacleConnection tentacle in pastTentacles)
+        {
+            connections.Add(new TentacleConnection(tentacle.rot, tentacle.type));
+        }
+
+        pastTentacles.Clear();
+
+        PlayTentaclesGetAnimation(connections);
     }
 
     public void CreateTentacle(Tentacle.Type _type, float _rot)
@@ -65,7 +112,8 @@ public class PlayerController : MonoBehaviour {
         GameObject tentacleTemp = Instantiate(tentaclePrefab, new Vector3(0, 0, 0), Quaternion.identity) as GameObject;
         tentacleTemp.name = tentacles.Count.ToString() + " - " + _type.ToString();
         tentacles.Add(tentacleTemp.GetComponent<Tentacle>());
-        tentacles[tentacles.Count - 1].InitTentacle(this.gameObject, _type);
+        pastTentacles.Add(new TentacleConnection(_rot, _type));
+        tentacles[tentacles.Count - 1].InitTentacle(this.gameObject, _type, _rot);
         tentacleTemp.transform.SetParent(this.gameObject.transform);
         tentacleTemp.transform.localPosition = Vector3.zero;
         tentacleTemp.transform.localRotation = Quaternion.Euler(new Vector3(0,0,_rot));
@@ -102,6 +150,46 @@ public class PlayerController : MonoBehaviour {
         Destroy(tentacleParticle);
     }
 
+    public void PlayTentaclesGetAnimation(List<TentacleConnection> _tentacles)
+    {
+        StartCoroutine(PlayTentaclesGetAnimationLoop(_tentacles));
+    }
+
+    public IEnumerator PlayTentaclesGetAnimationLoop(List<TentacleConnection> _tentacles)
+    {
+        Vector2 startPos = this.transform.position;
+        rb.isKinematic = true;
+        isControllable = false;
+        this.transform.DOMoveY(startPos.y + 1.5f, 0.5f);
+        this.transform.DORotate(Vector3.zero, 0.5f);
+        AudioManager.inst.PlaySound("armget");
+        yield return new WaitForSeconds(0.5f);
+        List<GameObject> tentacleParticles = new List<GameObject>();
+        List<TentacleConnection> tentaclesCopy = new List<TentacleConnection>();
+        foreach (TentacleConnection tentacle in _tentacles)
+        {
+            tentacleParticles.Add(Instantiate(particlePrefab, this.transform.position, Quaternion.identity) as GameObject);
+            tentacleParticles[tentacleParticles.Count - 1].transform.SetParent(this.transform);
+            tentacleParticles[tentacleParticles.Count - 1].transform.rotation = Quaternion.Euler(new Vector3(0, 0, tentacle.rot + 180));
+            tentaclesCopy.Add(tentacle);
+        }
+        yield return new WaitForSeconds(0.25f);
+        isControllable = true;
+        if (tentacles.Count == 0)
+            body.GetComponent<SpriteRenderer>().sprite = notCrying;
+        AudioManager.inst.PlaySound("armpop");
+        foreach (TentacleConnection tentacle in tentaclesCopy)
+        {
+            CreateTentacle(tentacle.type, tentacle.rot);
+        }
+        rb.isKinematic = false;
+        yield return new WaitForSeconds(0.5f);
+        foreach (GameObject tentacleParticle in tentacleParticles)
+        {
+            Destroy(tentacleParticle);
+        }
+    }
+
     void FixedUpdate()
     {
         currRotation = rb.rotation;
@@ -133,7 +221,12 @@ public class PlayerController : MonoBehaviour {
 
     void Update()
     {
-        if(Input.GetButtonDown("Jump") && IsGrounded)
+        if(Input.GetButtonDown("Cancel"))
+        {
+            DeleteTentacles();
+        }
+
+        if (Input.GetButtonDown("Jump") && IsGrounded)
         {
             AudioManager.inst.PlaySound("jump");
             rb.AddForce(new Vector2(0, jumpForce));

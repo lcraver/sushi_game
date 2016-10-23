@@ -12,15 +12,18 @@ public class Tentacle : MonoBehaviour {
     public enum Type { normal, grab, swing, fight };
     public Type type = Type.normal;
 
+    public float rot;
+
     public bool isGrabing;
     public GameObject heldObject;
     public Dictionary<GameObject, HingeJoint2D> heldJoints = new Dictionary<GameObject, HingeJoint2D>();
     public LayerMask grabLayers;
 
-    public Tentacle InitTentacle(GameObject _player, Type _type)
+    public Tentacle InitTentacle(GameObject _player, Type _type, float _rot)
     {
         type = _type;
         player = _player;
+        rot = _rot;
 
         armObject = this.transform.Find("arm").gameObject;
 
