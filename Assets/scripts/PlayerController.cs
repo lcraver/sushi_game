@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class PlayerController : MonoBehaviour {
 
-    public bool Debug;
+    public bool debug;
 
     public static PlayerController inst;
 
@@ -76,9 +76,18 @@ public class PlayerController : MonoBehaviour {
         //CreateTentacle(Tentacle.Type.grab, 20);
         //CreateTentacle(Tentacle.Type.grab, 160);
         //CreateTentacle(Tentacle.Type.grab, 70);
-       // CreateTentacle(Tentacle.Type.grab, 110);
+        //CreateTentacle(Tentacle.Type.grab, 110);
         //CreateTentacle(Tentacle.Type.grab, 135);
         DisplayText("Move with Arrow Jeys / Right Joystick \n \n Jump with Z / A Button", 5);
+    }
+
+    public void CreateExampleTentacles()
+    {
+        CreateTentacle(Tentacle.Type.grab, 20);
+        CreateTentacle(Tentacle.Type.grab, 160);
+        CreateTentacle(Tentacle.Type.grab, 70);
+        CreateTentacle(Tentacle.Type.grab, 110);
+        Debug.Log("created tentacle");
     }
 
     public void DeleteTentacles()
@@ -115,6 +124,7 @@ public class PlayerController : MonoBehaviour {
         pastTentacles.Add(new TentacleConnection(_rot, _type));
         tentacles[tentacles.Count - 1].InitTentacle(this.gameObject, _type, _rot);
         tentacleTemp.transform.SetParent(this.gameObject.transform);
+        tentacleTemp.transform.localScale = Vector3.one;
         tentacleTemp.transform.localPosition = Vector3.zero;
         tentacleTemp.transform.localRotation = Quaternion.Euler(new Vector3(0,0,_rot));
         FixedJoint2D joint = this.gameObject.AddComponent<FixedJoint2D>();
@@ -291,7 +301,7 @@ public class PlayerController : MonoBehaviour {
 
     void OnDrawGizmos()
     {
-        if (Debug)
+        if (debug)
         {
             Gizmos.color = new Color(0, 1, 0, 0.25f);
             Gizmos.DrawSphere(this.transform.position - new Vector3(0, 0.25f), 0.25f);
@@ -316,7 +326,8 @@ public class PlayerController : MonoBehaviour {
 
     public void DisplayText(string _text, float _time)
     {
-        StartCoroutine(DisplayTextLoop(_text, _time));
+        if (guiText != null)
+            StartCoroutine(DisplayTextLoop(_text, _time));
     }
 
     public IEnumerator DisplayTextLoop(string _text, float _time)
@@ -329,6 +340,7 @@ public class PlayerController : MonoBehaviour {
 
     public void ToggleText(bool _toggle)
     {
-        guiText.gameObject.SetActive(_toggle);
+        if(guiText != null)
+            guiText.gameObject.SetActive(_toggle);
     }
 }
