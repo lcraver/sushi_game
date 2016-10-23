@@ -73,10 +73,10 @@ public class PlayerController : MonoBehaviour {
         body.GetComponent<SpriteRenderer>().sprite = crying;
         ink = this.transform.Find("ink").gameObject;
         ToggleText(false);
-        //CreateTentacle(Tentacle.Type.grab, 0);
-        //CreateTentacle(Tentacle.Type.grab, 180);
-        //CreateTentacle(Tentacle.Type.grab, 75);
-        //CreateTentacle(Tentacle.Type.grab, 105);
+        //CreateTentacle(Tentacle.Type.grab, 20);
+        //CreateTentacle(Tentacle.Type.grab, 160);
+        //CreateTentacle(Tentacle.Type.grab, 70);
+       // CreateTentacle(Tentacle.Type.grab, 110);
         //CreateTentacle(Tentacle.Type.grab, 135);
         DisplayText("Move with Arrow Jeys / Right Joystick \n \n Jump with Z / A Button", 5);
     }
