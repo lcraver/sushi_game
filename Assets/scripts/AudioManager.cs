@@ -32,7 +32,7 @@ public class AudioManager : MonoBehaviour
         if (!inst)
         {
             inst = this;
-            DontDestroyOnLoad(gameObject);
+            //DontDestroyOnLoad(gameObject);
         }
         else
             Destroy(gameObject);
@@ -128,7 +128,7 @@ public class AudioManager : MonoBehaviour
     /// </summary>
     /// <param name="clip">The audio clip to play.</param>
     /// <param name="pos">The position to play the clip at.</param>
-    public void PlaySound(AudioClip _clip)
+    public void PlaySoundClip(AudioClip _clip, float _vol = 1f)
     {
         if (_clip != null)
         {
@@ -138,7 +138,7 @@ public class AudioManager : MonoBehaviour
             newSound.clip = _clip;
             newSound.playOnAwake = true;
             newSound.loop = false;
-            newSound.volume = 1;
+            newSound.volume = _vol;
             newSound.Play();
 
             StartCoroutine(DestroyWithDelay(newSound, _clip.length));
@@ -159,9 +159,9 @@ public class AudioManager : MonoBehaviour
     /// Plays a given sound at the given locaiton.
     /// </summary>
     /// <param name="soundName">The name of the sound.</param>
-    public void PlaySound(string soundName)
+    public void PlaySound(string soundName, float _vol = 1f)
     {
-        PlaySound(library.GetClipFromName(soundName));
+        PlaySoundClip(library.GetClipFromName(soundName), _vol);
     }
 
     /// <summary>

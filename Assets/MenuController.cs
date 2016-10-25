@@ -21,6 +21,11 @@ public class MenuController : MonoBehaviour {
         PlayerController.inst.CreateExampleTentacles();
     }
 
+    public void Quit()
+    {
+        Application.Quit();
+    }
+
     public void Play()
     {
         SceneManager.LoadScene("test");
@@ -36,6 +41,7 @@ public class MenuController : MonoBehaviour {
         isMoving = true;
         EventSystem.current.sendNavigationEvents = false;
         this.transform.DOMove(aboutPos + new Vector3(0, 0, this.transform.position.z), 0.25f);
+        PlayerController.inst.rb.AddForce(new Vector2(10000,0));
         yield return new WaitForSeconds(0.2f);
         isMoving = false;
         EventSystem.current.sendNavigationEvents = true;
@@ -52,6 +58,7 @@ public class MenuController : MonoBehaviour {
         isMoving = true;
         EventSystem.current.sendNavigationEvents = false;
         this.transform.DOMove(mainPos + new Vector3(0,0,this.transform.position.z), 0.25f);
+        PlayerController.inst.rb.AddForce(new Vector2(-10000, 0));
         yield return new WaitForSeconds(0.2f);
         isMoving = false;
         EventSystem.current.sendNavigationEvents = true;

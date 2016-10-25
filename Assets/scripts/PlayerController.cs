@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class PlayerController : MonoBehaviour {
 
@@ -19,6 +20,7 @@ public class PlayerController : MonoBehaviour {
     }
 
     public Text guiText;
+    public List<bool> isShowingText = new List<bool>();
 
     public bool isControllable;
 
@@ -33,6 +35,8 @@ public class PlayerController : MonoBehaviour {
     public Sprite notCrying;
     public List<TentacleConnection> pastTentacles = new List<TentacleConnection>();
     public List<Tentacle> tentacles = new List<Tentacle>();
+
+    public bool isFinished = false;
 
     public Vector2 currentCheckpoint = new Vector2(-2.5f, -3.4f);
 
@@ -58,6 +62,7 @@ public class PlayerController : MonoBehaviour {
     public float jumpForce = 100f;
 
     public LayerMask groundLayers;
+    public bool WasGrounded = false;
     public bool IsGrounded = false;
     public bool IsHoldingObject = false;
 
@@ -92,9 +97,11 @@ public class PlayerController : MonoBehaviour {
 
     public void DeleteTentacles()
     {
-        foreach(Tentacle tentacle in tentacles)
+        Destroy(this.GetComponent<FixedJoint2D>());
+        foreach (Tentacle tentacle in tentacles)
         {
             Destroy(tentacle.gameObject);
+            Destroy(this.GetComponent<FixedJoint2D>());
         }
         tentacles.Clear();
 
@@ -229,18 +236,41 @@ public class PlayerController : MonoBehaviour {
         lastRotation = currRotation;
     }
 
+    IEnumerator GoToMenu(float _time)
+    {
+        yield return new WaitForSeconds(_time);
+        SceneManager.LoadScene("main menu");
+    }
+
     void Update()
     {
-        if(Input.GetButtonDown("Cancel"))
+        if (isControllable && this.transform.position.x > 82 && !isFinished)
         {
-            DeleteTentacles();
+            isFinished = true;
+            isControllable = false;
+            rb.isKinematic = true;
+
+            DisplayText("Congratulations you Escaped! \n\n And collected " + tentacles.Count + "/4 of your tentacles.", 10f);
+            StartCoroutine(GoToMenu(4f));
         }
 
-        if (Input.GetButtonDown("Jump") && IsGrounded)
+        IsGrounded = isGrounded();
+        if (!WasGrounded && IsGrounded)
+            AudioManager.inst.PlaySound("squid", 0.5f);
+
+        if (isControllable)
         {
-            AudioManager.inst.PlaySound("jump");
-            rb.AddForce(new Vector2(0, jumpForce));
-            ink.GetComponent<ParticleSystem>().Play();
+            if (Input.GetButtonDown("Cancel"))
+            {
+                DeleteTentacles();
+            }
+
+            if (Input.GetButtonDown("Jump") && IsGrounded)
+            {
+                AudioManager.inst.PlaySound("jump");
+                rb.AddForce(new Vector2(0, jumpForce));
+                ink.GetComponent<ParticleSystem>().Play();
+            }
         }
 
         if (IsGrounded)
@@ -263,8 +293,8 @@ public class PlayerController : MonoBehaviour {
                 }
             }
         }
-
-        IsGrounded = isGrounded();
+        
+        WasGrounded = IsGrounded;
     }
 
     bool isGrounded()
@@ -335,12 +365,18 @@ public class PlayerController : MonoBehaviour {
         guiText.text = _text;
         ToggleText(true);
         yield return new WaitForSeconds(_time);
-        ToggleText(false);
+        isShowingText.RemoveAt(0);
+        if (isShowingText.Count == 0)
+            ToggleText(false);
     }
 
     public void ToggleText(bool _toggle)
     {
-        if(guiText != null)
+        if (guiText != null)
+        {
             guiText.gameObject.SetActive(_toggle);
+            if (_toggle)
+                isShowingText.Add(true);
+        }
     }
 }
